@@ -3,7 +3,7 @@
 This gem is inspired by [ctran/annotate_models](https://github.com/ctran/annotate_models).
 
 It automatically generates YARD comments for every model
-in your Rails application. Their formatted in a way to make them easy
+in your Rails application. They're formatted in a way to make them easy
 to parse for [Solargraph](https://solargraph.org/) (a great gem that serves
 as a Ruby language server for your IDE).
 

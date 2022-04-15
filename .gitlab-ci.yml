@@ -3,7 +3,9 @@ image: ruby:2.7.6
 before_script:
   - gem install bundler -v 2.3.3
   - bundle install
+  - git config --global user.email "someone@example.com"
+  - git config --global user.name "Dummy Name"
 
-example_job:
+test:
   script:
     - bundle exec rake
