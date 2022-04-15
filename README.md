@@ -1,5 +1,7 @@
 # Rails::Annotate::Solargraph
 
+![pipeline status](https://gitlab.com/mateuszdrewniak/rails-annotate-solargraph/badges/main/pipeline.svg)
+
 This gem is inspired by [ctran/annotate_models](https://github.com/ctran/annotate_models).
 
 It automatically generates YARD comments for every model
