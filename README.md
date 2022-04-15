@@ -11,12 +11,12 @@ as a Ruby language server for your IDE).
 
 Here's how you can generate and use these annotations.
 
-![Annotation Generation Gif](readme_assets/annotation_generation_demo.gif)
+![Annotation Generation Gif](assets/annotation_generation_demo.gif)
 
 They're automatically updated and generated when you execute migrations
 in the development environment.
 
-![Automatic Annotations Gif](readme_assets/automatic_annotations_demo.gif)
+![Automatic Annotations Gif](assets/automatic_annotations_demo.gif)
 
 ## Installation
 
