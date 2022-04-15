@@ -7,6 +7,15 @@ in your Rails application. Their formatted in a way to make them easy
 to parse for [Solargraph](https://solargraph.org/) (a great gem that serves
 as a Ruby language server for your IDE).
 
+Here's how you can generate and use these annotations.
+
+![Annotation Generation Gif](readme_assets/annotation_generation_demo.gif)
+
+They're automatically updated and generated when you execute migrations
+in the development environment.
+
+![Automatic Annotations Gif](readme_assets/automatic_annotations_demo.gif)
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -28,12 +37,14 @@ Then use this command to generate appropriate Rakefiles
     $ rails g annotate:solargraph:install
 
 
-And your ready to go!
+And you're ready to go!
 
 Comments should be automatically added and
 updated once you execute a migration.
 
 ## Usage
+
+You can also manually generate or remove annotations.
 
 ### Annotate all models
 
@@ -43,6 +54,18 @@ updated once you execute a migration.
 
     $ rake annotate:solargraph:remove
 
+### Configure
+
+You can change the gem's default configuration like so:
+
+```ruby
+# config/initializers/rails_annotate_solargraph.rb
+
+Rails::Annotate::Solargraph.configure do |conf|
+    conf.annotation_position = :top # `:bottom` by default
+end
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
@@ -51,7 +74,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/rails-annotate-solargraph.
+Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/mateuszdrewniak/rails-annotate-solargraph.
 
 ## License
 
