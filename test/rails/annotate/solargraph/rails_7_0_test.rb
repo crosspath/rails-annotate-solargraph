@@ -17,6 +17,7 @@ module Rails
           @git.add
           @git.commit('.')
           assert @git.diff.none?
+          assert system 'bundle exec rails db:drop db:setup'
         end
 
         def teardown
@@ -127,7 +128,6 @@ module Rails
         end
 
         def test_annotate_after_migration
-          assert system 'bundle exec rails db:drop db:setup'
           assert system 'bundle exec rails g annotate:solargraph:install'
           assert system 'bundle exec rails g model NewModel'
           assert system 'bundle exec rails db:migrate'
