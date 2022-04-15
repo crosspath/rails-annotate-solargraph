@@ -1,27 +1,30 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require 'fileutils'
 
 module Rails
   module Annotate
     module Solargraph
       class Rails70Test < ::Minitest::Test
         RAKEFILE_PATH = "lib/tasks/#{RAKEFILE_NAME}"
+        RAILS_PROJECT_PATH = 'test/rails_7_0'
 
         def setup
-          @original_verbose = $VERBOSE
-          $VERBOSE = nil
           @original_pwd = ::Dir.pwd
-          ::Dir.chdir 'test/rails_7_0'
-          @git = ::Git.open(::Dir.pwd)
+          ::Dir.chdir RAILS_PROJECT_PATH
+          @git = ::Git.init(::Dir.pwd)
+          @git.add
+          @git.commit('.') rescue nil
           assert @git.diff.none?
         end
 
         def teardown
           @git.clean(force: true)
-          @git.reset_hard('main')
+          @git.reset_hard
+          @git = nil
+          ::FileUtils.rm_rf('.git')
           ::Dir.chdir @original_pwd
-          $VERBOSE = @original_verbose
         end
 
         def test_generate_rakefile

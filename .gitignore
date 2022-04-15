@@ -8,3 +8,4 @@
 /tmp/
 
 ignore.*
+!test/rails_7_0/*
