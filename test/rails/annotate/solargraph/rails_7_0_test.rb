@@ -15,7 +15,7 @@ module Rails
           ::Dir.chdir RAILS_PROJECT_PATH
           @git = ::Git.init(::Dir.pwd)
           @git.add
-          @git.commit('.') rescue nil
+          @git.commit('.')
           assert @git.diff.none?
         end
 
