@@ -1,5 +1,3 @@
-require 'rails/annotate/solargraph'
-
 module Annotate
   module Solargraph
     module Generators
@@ -9,7 +7,7 @@ module Annotate
 
         # copy rake tasks
         def copy_tasks
-          template ::Rails::Annotate::Solargraph::RAKEFILE_NAME, ::Rails::Annotate::Solargraph::RAKEFILE_NAME
+          template ::Rails::Annotate::Solargraph::RAKEFILE_NAME, ::File.join('lib', 'tasks', ::Rails::Annotate::Solargraph::RAKEFILE_NAME)
         end
       end
     end

@@ -5,8 +5,8 @@ module Rails
     module Solargraph
       class Model
         ANNOTATION_START = "\n# %%<RailsAnnotateSolargraph:Start>%%"
-        ANNOTATION_END = "%%<RailsAnnotateSolargraph:End>%%\n"
-        ANNOTATION_REGEXP = /#{ANNOTATION_START}.*#{ANNOTATION_END}\n/m.freeze
+        ANNOTATION_END = "%%<RailsAnnotateSolargraph:End>%%\n\n"
+        ANNOTATION_REGEXP = /#{ANNOTATION_START}.*#{ANNOTATION_END}/m.freeze
         MAGIC_COMMENT_REGEXP = /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/.freeze
 
         class << self
@@ -63,6 +63,7 @@ module Rails
           end
 
           return new_file_content unless write
+          return new_file_content if file_content == new_file_content
 
           ::File.write @file_name, new_file_content
           new_file_content
@@ -71,11 +72,13 @@ module Rails
         # @param :write [Boolean]
         # @return [String] New file content.
         def remove_annotation(write: true)
-          file_content = ::File.read(@file_name).sub(ANNOTATION_REGEXP, '')
-          return file_content unless write
+          file_content = ::File.read(@file_name)
+          new_file_content = file_content.sub(ANNOTATION_REGEXP, '')
+          return new_file_content unless write
+          return new_file_content if file_content == new_file_content
 
-          ::File.write @file_name, file_content
-          file_content
+          ::File.write @file_name, new_file_content
+          new_file_content
         end
 
         # @return [String]
@@ -98,7 +101,7 @@ module Rails
             DOC
           end
 
-          result << <<~DOC
+          result << <<~DOC.chomp
             #   end
             # #{ANNOTATION_END}
           DOC

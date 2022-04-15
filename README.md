@@ -1,8 +1,11 @@
 # Rails::Annotate::Solargraph
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/rails/annotate/solargraph`. To experiment with that code, run `bin/console` for an interactive prompt.
+This gem is inspired by [ctran/annotate_models](https://github.com/ctran/annotate_models).
 
-TODO: Delete this and the text above, and describe your gem
+It automatically generates YARD comments for every model
+in your Rails application. Their formatted in a way to make them easy
+to parse for [Solargraph](https://solargraph.org/) (a great gem that serves
+as a Ruby language server for your IDE).
 
 ## Installation
 
@@ -20,9 +23,25 @@ Or install it yourself as:
 
     $ gem install rails-annotate-solargraph
 
+Then use this command to generate appropriate Rakefiles
+
+    $ rails g annotate:solargraph:install
+
+
+And your ready to go!
+
+Comments should be automatically added and
+updated once you execute a migration.
+
 ## Usage
 
-TODO: Write usage instructions here
+### Annotate all models
+
+    $ rake annotate:solargraph:generate
+
+### Remove all annotations
+
+    $ rake annotate:solargraph:remove
 
 ## Development
 
