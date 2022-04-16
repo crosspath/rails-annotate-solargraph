@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.2.3] - 2022-04-16
+
+- A nicer fix for the previous problem
+
 ## [0.2.2] - 2022-04-16
 
 - Inexistent class loading error has been resolved
