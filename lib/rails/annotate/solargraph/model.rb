@@ -98,7 +98,7 @@ module Rails
             #   class #{@klass} < #{@klass.superclass}
           DOC
 
-          @klass.reflections.each do |attr_name, reflection|
+          @klass.reflections.sort.each do |attr_name, reflection|
             next document_polymorphic_relation(doc_string, attr_name, reflection) if reflection.polymorphic?
 
             document_relation(doc_string, attr_name, reflection)

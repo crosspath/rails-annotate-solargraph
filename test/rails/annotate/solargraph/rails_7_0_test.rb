@@ -183,18 +183,18 @@ module Rails
             +#     # `belongs_to` relation with `Author`. Database column `books.author_id`.
             +#     # @return [Author, nil]
             +#     def author; end
-            +#     # `belongs_to` relation with `Publisher`. Database column `books.publisher_id`.
-            +#     # @param val [Publisher, nil]
-            +#     def publisher=(val); end
-            +#     # `belongs_to` relation with `Publisher`. Database column `books.publisher_id`.
-            +#     # @return [Publisher, nil]
-            +#     def publisher; end
             +#     # `has_one` relation with `Image`. Database column `images.imageable_id`.
             +#     # @param val [Image, nil]
             +#     def image=(val); end
             +#     # `has_one` relation with `Image`. Database column `images.imageable_id`.
             +#     # @return [Image, nil]
             +#     def image; end
+            +#     # `belongs_to` relation with `Publisher`. Database column `books.publisher_id`.
+            +#     # @param val [Publisher, nil]
+            +#     def publisher=(val); end
+            +#     # `belongs_to` relation with `Publisher`. Database column `books.publisher_id`.
+            +#     # @return [Publisher, nil]
+            +#     def publisher; end
             +#     # Database column `books.id`, type: `integer`.
             +#     # @param val [Integer, nil]
             +#     def id=(val); end
@@ -340,10 +340,10 @@ module Rails
             +# @!parse
             +#   class Image < ApplicationRecord
             +#     # Polymorphic relation. Database columns `images.imageable_id` and `images.imageable_type`.
-            +#     # @param val [Book, Author, nil]
+            +#     # @param val [Author, Book, nil]
             +#     def imageable=(val); end
             +#     # Polymorphic relation. Database columns `images.imageable_id` and `images.imageable_type`.
-            +#     # @return [Book, Author, nil]
+            +#     # @return [Author, Book, nil]
             +#     def imageable; end
             +#     # Database column `images.id`, type: `integer`.
             +#     # @param val [Integer, nil]

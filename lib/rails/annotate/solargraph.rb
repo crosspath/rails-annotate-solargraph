@@ -42,7 +42,7 @@ module Rails
 
         # @return [Array<ActiveRecord::Base>]
         def model_classes
-          @model_classes ||= (::ApplicationRecord rescue ::ActiveRecord::Base).subclasses
+          @model_classes ||= (::ApplicationRecord rescue ::ActiveRecord::Base).subclasses.sort_by(&:name)
         end
 
         private
