@@ -4,6 +4,7 @@ require 'set'
 
 require_relative "solargraph/version"
 require_relative "solargraph/configuration"
+require_relative "solargraph/terminal_colors"
 require_relative "solargraph/model"
 
 module Rails
@@ -16,15 +17,19 @@ module Rails
       RAKEFILE_NAME = 'rails_annotate_solargraph.rake'
       # @return [Configuration]
       CONFIG = Configuration.new
+      # @return [Set<Symbol>]
+      VALID_MODIFICATION_METHODS = ::Set[:annotate, :remove_annotation].freeze
 
       class << self
         # @return [Array<String>] Array of changed files.
         def generate
+          title 'Generating model schema annotations'
           modify_models :annotate
         end
 
         # @return [Array<String>] Array of changed files.
         def remove
+          title 'Removing model schema annotations'
           modify_models :remove_annotation
         end
 
@@ -35,9 +40,14 @@ module Rails
 
         alias call generate
 
-        VALID_MODIFICATION_METHODS = ::Set[:annotate, :remove_annotation]
+        # @return [Array<ActiveRecord::Base>]
+        def model_classes
+          @model_classes ||= (::ApplicationRecord rescue ::ActiveRecord::Base).subclasses
+        end
 
         private
+
+        include TerminalColors
 
         # @param method [Symbol] Name of the method that will be called on every loaded Model
         # @return [Array<String>] Array of changed files.
@@ -49,7 +59,7 @@ module Rails
           model_files = ::Dir[::File.join(::Rails.root, MODEL_DIR, '**/*.rb')].map { |file| file.sub("#{::Rails.root}/", '') }.to_set
 
           ::Rails.application.eager_load!
-          (::ApplicationRecord rescue ::ActiveRecord::Base).subclasses.each do |subclass|
+          model_classes.each do |subclass|
             subclass_file = ::File.join MODEL_DIR, "#{subclass.to_s.underscore}.rb"
             next unless model_files.include? subclass_file
 

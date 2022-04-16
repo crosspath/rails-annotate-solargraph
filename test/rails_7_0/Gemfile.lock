@@ -1,8 +1,7 @@
 PATH
   remote: ../..
   specs:
-    rails-annotate-solargraph (0.1.0)
-      debug
+    rails-annotate-solargraph (0.1.1)
       rails (>= 5.0, < 8.0)
 
 GEM

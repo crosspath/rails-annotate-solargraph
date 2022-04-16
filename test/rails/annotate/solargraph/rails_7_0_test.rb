@@ -2,6 +2,7 @@
 
 require "test_helper"
 require 'fileutils'
+require 'debug'
 
 module Rails
   module Annotate
@@ -9,6 +10,7 @@ module Rails
       class Rails70Test < ::Minitest::Test
         RAKEFILE_PATH = "lib/tasks/#{RAKEFILE_NAME}"
         RAILS_PROJECT_PATH = 'test/rails_7_0'
+        MODEL_FILES = %w[app/models/author.rb app/models/book.rb app/models/essay.rb app/models/image.rb app/models/publisher.rb].sort.freeze
 
         def setup
           @original_pwd = ::Dir.pwd
@@ -38,90 +40,17 @@ module Rails
         def test_annotate_models
           assert system 'bundle exec rails g annotate:solargraph:install'
           assert system 'bundle exec rake annotate:solargraph:generate'
-          assert_equal 1, @git.diff.entries.size
-          diff = @git.diff.entries.first
-          assert_equal 'modified', diff.type
-          assert_equal 'app/models/book.rb', diff.path
-          expected_patch = <<~PATCH.chomp
-            +
-            +# %%<RailsAnnotateSolargraph:Start>%%
-            +# @!parse
-            +#   class Book < ApplicationRecord
-            +#     # Database column `books.id`, type: `integer`.
-            +#     # @param val [Integer, nil]
-            +#     def id=(val); end
-            +#     # Database column `books.id`, type: `integer`.
-            +#     # @return [Integer, nil]
-            +#     def id; end
-            +#     # Database column `books.hash`, type: `text`.
-            +#     # @param val [Hash, nil]
-            +#     def hash=(val); end
-            +#     # Database column `books.hash`, type: `text`.
-            +#     # @return [Hash, nil]
-            +#     def hash; end
-            +#     # Database column `books.array`, type: `text`.
-            +#     # @param val [Array, nil]
-            +#     def array=(val); end
-            +#     # Database column `books.array`, type: `text`.
-            +#     # @return [Array, nil]
-            +#     def array; end
-            +#     # Database column `books.openstruct`, type: `text`.
-            +#     # @param val [OpenStruct, nil]
-            +#     def openstruct=(val); end
-            +#     # Database column `books.openstruct`, type: `text`.
-            +#     # @return [OpenStruct, nil]
-            +#     def openstruct; end
-            +#     # Database column `books.integer`, type: `integer`.
-            +#     # @param val [Integer, nil]
-            +#     def integer=(val); end
-            +#     # Database column `books.integer`, type: `integer`.
-            +#     # @return [Integer, nil]
-            +#     def integer; end
-            +#     # Database column `books.price`, type: `decimal`.
-            +#     # @param val [BigDecimal, nil]
-            +#     def price=(val); end
-            +#     # Database column `books.price`, type: `decimal`.
-            +#     # @return [BigDecimal, nil]
-            +#     def price; end
-            +#     # Database column `books.hard_cover`, type: `boolean`.
-            +#     # @param val [Boolean, nil]
-            +#     def hard_cover=(val); end
-            +#     # Database column `books.hard_cover`, type: `boolean`.
-            +#     # @return [Boolean, nil]
-            +#     def hard_cover; end
-            +#     # Database column `books.title`, type: `string`.
-            +#     # @param val [String, nil]
-            +#     def title=(val); end
-            +#     # Database column `books.title`, type: `string`.
-            +#     # @return [String, nil]
-            +#     def title; end
-            +#     # Database column `books.created_at`, type: `datetime`.
-            +#     # @param val [Time, nil]
-            +#     def created_at=(val); end
-            +#     # Database column `books.created_at`, type: `datetime`.
-            +#     # @return [Time, nil]
-            +#     def created_at; end
-            +#     # Database column `books.updated_at`, type: `datetime`.
-            +#     # @param val [Time, nil]
-            +#     def updated_at=(val); end
-            +#     # Database column `books.updated_at`, type: `datetime`.
-            +#     # @return [Time, nil]
-            +#     def updated_at; end
-            +#   end
-            +# %%<RailsAnnotateSolargraph:End>%%
-            +
-          PATCH
+          assert_equal 5, @git.diff.entries.size
+          assert_equal MODEL_FILES, @git.diff.entries.map(&:path).sort
 
-          assert diff.patch.include? expected_patch
+          verify_annotations
         end
 
         def test_remove_annotations
           assert system 'bundle exec rails g annotate:solargraph:install'
           assert system 'bundle exec rake annotate:solargraph:generate'
-          assert_equal 1, @git.diff.entries.size
-          diff = @git.diff.entries.first
-          assert_equal 'modified', diff.type
-          assert_equal 'app/models/book.rb', diff.path
+          assert_equal 5, @git.diff.entries.size
+          assert_equal MODEL_FILES, @git.diff.entries.map(&:path).sort
 
           assert system 'bundle exec rake annotate:solargraph:remove'
           assert @git.diff.none?
@@ -133,10 +62,11 @@ module Rails
           assert system 'bundle exec rails db:migrate'
 
           @git.add 'app/models/new_model.rb'
-          assert_equal 3, @git.diff.entries.size
-          diff = @git.diff.entries
-          new_model_diff = diff.find { |d| d.type == 'new' }
-          assert_equal 'app/models/new_model.rb', new_model_diff.path
+          assert_equal 7, @git.diff.entries.size
+
+          diff = file_diff 'app/models/new_model.rb'
+          assert_equal 'app/models/new_model.rb', diff.path
+          assert_equal 'new', diff.type
           expected_patch = <<~PATCH.chomp
             +
             +# %%<RailsAnnotateSolargraph:Start>%%
@@ -164,15 +94,107 @@ module Rails
             +# %%<RailsAnnotateSolargraph:End>%%
             +
           PATCH
-          assert new_model_diff.patch.include? expected_patch
+          assert diff.patch.include? expected_patch
 
-          book_diff = diff.find { |d| d.path == 'app/models/book.rb' }
-          assert_equal 'modified', book_diff.type
+          verify_annotations
+        end
+
+        private
+
+        def file_diff(file_name)
+          @git.diff.entries.find { _1.path == file_name }
+        end
+
+        def verify_annotations
+          diff = file_diff 'app/models/author.rb'
+          assert_equal 'modified', diff.type
+          assert_equal 'app/models/author.rb', diff.path
+          expected_patch = <<~PATCH.chomp
+            +
+            +# %%<RailsAnnotateSolargraph:Start>%%
+            +# @!parse
+            +#   class Author < ApplicationRecord
+            +#     # `has_many` relation with `Book`. Database column `books.author_id`.
+            +#     # @param val [Array<Book>, nil]
+            +#     def books=(val); end
+            +#     # `has_many` relation with `Book`. Database column `books.author_id`.
+            +#     # @return [Array<Book>, nil]
+            +#     def books; end
+            +#     # `has_many` relation with `Essay`. Database column `essays.author_id`.
+            +#     # @param val [Array<Essay>, nil]
+            +#     def essays=(val); end
+            +#     # `has_many` relation with `Essay`. Database column `essays.author_id`.
+            +#     # @return [Array<Essay>, nil]
+            +#     def essays; end
+            +#     # `has_one` relation with `Image`. Database column `images.imageable_id`.
+            +#     # @param val [Image, nil]
+            +#     def image=(val); end
+            +#     # `has_one` relation with `Image`. Database column `images.imageable_id`.
+            +#     # @return [Image, nil]
+            +#     def image; end
+            +#     # Database column `authors.id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def id=(val); end
+            +#     # Database column `authors.id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def id; end
+            +#     # Database column `authors.first_name`, type: `string`.
+            +#     # @param val [String, nil]
+            +#     def first_name=(val); end
+            +#     # Database column `authors.first_name`, type: `string`.
+            +#     # @return [String, nil]
+            +#     def first_name; end
+            +#     # Database column `authors.last_name`, type: `string`.
+            +#     # @param val [String, nil]
+            +#     def last_name=(val); end
+            +#     # Database column `authors.last_name`, type: `string`.
+            +#     # @return [String, nil]
+            +#     def last_name; end
+            +#     # Database column `authors.created_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def created_at=(val); end
+            +#     # Database column `authors.created_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def created_at; end
+            +#     # Database column `authors.updated_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def updated_at=(val); end
+            +#     # Database column `authors.updated_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def updated_at; end
+            +#   end
+            +# %%<RailsAnnotateSolargraph:End>%%
+            +
+          PATCH
+
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/book.rb'
+          assert_equal 'modified', diff.type
+          assert_equal 'app/models/book.rb', diff.path
           expected_patch = <<~PATCH.chomp
             +
             +# %%<RailsAnnotateSolargraph:Start>%%
             +# @!parse
             +#   class Book < ApplicationRecord
+            +#     # `belongs_to` relation with `Author`. Database column `books.author_id`.
+            +#     # @param val [Author, nil]
+            +#     def author=(val); end
+            +#     # `belongs_to` relation with `Author`. Database column `books.author_id`.
+            +#     # @return [Author, nil]
+            +#     def author; end
+            +#     # `belongs_to` relation with `Publisher`. Database column `books.publisher_id`.
+            +#     # @param val [Publisher, nil]
+            +#     def publisher=(val); end
+            +#     # `belongs_to` relation with `Publisher`. Database column `books.publisher_id`.
+            +#     # @return [Publisher, nil]
+            +#     def publisher; end
+            +#     # `has_one` relation with `Image`. Database column `images.imageable_id`.
+            +#     # @param val [Image, nil]
+            +#     def image=(val); end
+            +#     # `has_one` relation with `Image`. Database column `images.imageable_id`.
+            +#     # @return [Image, nil]
+            +#     def image; end
             +#     # Database column `books.id`, type: `integer`.
             +#     # @param val [Integer, nil]
             +#     def id=(val); end
@@ -233,12 +255,183 @@ module Rails
             +#     # Database column `books.updated_at`, type: `datetime`.
             +#     # @return [Time, nil]
             +#     def updated_at; end
+            +#     # Database column `books.author_id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def author_id=(val); end
+            +#     # Database column `books.author_id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def author_id; end
+            +#     # Database column `books.publisher_id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def publisher_id=(val); end
+            +#     # Database column `books.publisher_id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def publisher_id; end
             +#   end
             +# %%<RailsAnnotateSolargraph:End>%%
             +
           PATCH
 
-          assert book_diff.patch.include? expected_patch
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/essay.rb'
+          assert_equal 'modified', diff.type
+          assert_equal 'app/models/essay.rb', diff.path
+          expected_patch = <<~PATCH.chomp
+            +
+            +# %%<RailsAnnotateSolargraph:Start>%%
+            +# @!parse
+            +#   class Essay < ApplicationRecord
+            +#     # `belongs_to` relation with `Author`. Database column `essays.author_id`.
+            +#     # @param val [Author, nil]
+            +#     def author=(val); end
+            +#     # `belongs_to` relation with `Author`. Database column `essays.author_id`.
+            +#     # @return [Author, nil]
+            +#     def author; end
+            +#     # Database column `essays.id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def id=(val); end
+            +#     # Database column `essays.id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def id; end
+            +#     # Database column `essays.content`, type: `text`.
+            +#     # @param val [String, nil]
+            +#     def content=(val); end
+            +#     # Database column `essays.content`, type: `text`.
+            +#     # @return [String, nil]
+            +#     def content; end
+            +#     # Database column `essays.title`, type: `string`.
+            +#     # @param val [String, nil]
+            +#     def title=(val); end
+            +#     # Database column `essays.title`, type: `string`.
+            +#     # @return [String, nil]
+            +#     def title; end
+            +#     # Database column `essays.author_id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def author_id=(val); end
+            +#     # Database column `essays.author_id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def author_id; end
+            +#     # Database column `essays.created_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def created_at=(val); end
+            +#     # Database column `essays.created_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def created_at; end
+            +#     # Database column `essays.updated_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def updated_at=(val); end
+            +#     # Database column `essays.updated_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def updated_at; end
+            +#   end
+            +# %%<RailsAnnotateSolargraph:End>%%
+            +
+          PATCH
+
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/image.rb'
+          assert_equal 'modified', diff.type
+          assert_equal 'app/models/image.rb', diff.path
+          expected_patch = <<~PATCH.chomp
+            +
+            +# %%<RailsAnnotateSolargraph:Start>%%
+            +# @!parse
+            +#   class Image < ApplicationRecord
+            +#     # Polymorphic relation. Database columns `images.imageable_id` and `images.imageable_type`.
+            +#     # @param val [Book, Author, nil]
+            +#     def imageable=(val); end
+            +#     # Polymorphic relation. Database columns `images.imageable_id` and `images.imageable_type`.
+            +#     # @return [Book, Author, nil]
+            +#     def imageable; end
+            +#     # Database column `images.id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def id=(val); end
+            +#     # Database column `images.id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def id; end
+            +#     # Database column `images.content`, type: `text`.
+            +#     # @param val [String, nil]
+            +#     def content=(val); end
+            +#     # Database column `images.content`, type: `text`.
+            +#     # @return [String, nil]
+            +#     def content; end
+            +#     # Database column `images.imageable_id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def imageable_id=(val); end
+            +#     # Database column `images.imageable_id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def imageable_id; end
+            +#     # Database column `images.imageable_type`, type: `string`.
+            +#     # @param val [String, nil]
+            +#     def imageable_type=(val); end
+            +#     # Database column `images.imageable_type`, type: `string`.
+            +#     # @return [String, nil]
+            +#     def imageable_type; end
+            +#     # Database column `images.created_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def created_at=(val); end
+            +#     # Database column `images.created_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def created_at; end
+            +#     # Database column `images.updated_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def updated_at=(val); end
+            +#     # Database column `images.updated_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def updated_at; end
+            +#   end
+            +# %%<RailsAnnotateSolargraph:End>%%
+            +
+          PATCH
+
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/publisher.rb'
+          assert_equal 'modified', diff.type
+          assert_equal 'app/models/publisher.rb', diff.path
+          expected_patch = <<~PATCH.chomp
+            +
+            +# %%<RailsAnnotateSolargraph:Start>%%
+            +# @!parse
+            +#   class Publisher < ApplicationRecord
+            +#     # `has_many` relation with `Book`. Database column `books.publisher_id`.
+            +#     # @param val [Array<Book>, nil]
+            +#     def books=(val); end
+            +#     # `has_many` relation with `Book`. Database column `books.publisher_id`.
+            +#     # @return [Array<Book>, nil]
+            +#     def books; end
+            +#     # Database column `publishers.id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def id=(val); end
+            +#     # Database column `publishers.id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def id; end
+            +#     # Database column `publishers.name`, type: `string`.
+            +#     # @param val [String, nil]
+            +#     def name=(val); end
+            +#     # Database column `publishers.name`, type: `string`.
+            +#     # @return [String, nil]
+            +#     def name; end
+            +#     # Database column `publishers.created_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def created_at=(val); end
+            +#     # Database column `publishers.created_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def created_at; end
+            +#     # Database column `publishers.updated_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def updated_at=(val); end
+            +#     # Database column `publishers.updated_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def updated_at; end
+            +#   end
+            +# %%<RailsAnnotateSolargraph:End>%%
+            +
+          PATCH
+
+          assert diff.patch.include? expected_patch
         end
       end
     end
