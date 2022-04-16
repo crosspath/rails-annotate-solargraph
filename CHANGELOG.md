@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.2.1] - 2022-04-16
+
+- Rakefile template refactoring and bug fix
+
 ## [0.2.0] - 2022-04-16
 
 - Associations get fully documented
