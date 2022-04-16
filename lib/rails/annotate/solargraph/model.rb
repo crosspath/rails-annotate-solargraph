@@ -15,18 +15,6 @@ module Rails
         # @return [Regexp]
         MAGIC_COMMENT_REGEXP = /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/.freeze
 
-        class << (FAKE_MODEL_CLASS = Object.new)
-          def to_s
-            ::Object.to_s
-          end
-
-          alias name to_s
-
-          def table_name
-            '<unknown>'
-          end
-        end
-
         class << self
           # @param type [Symbol, String, nil]
           # @return [String]
@@ -162,20 +150,22 @@ module Rails
           reflection_class = begin
             reflection.klass
           rescue ::NameError
-            FAKE_MODEL_CLASS
+            Object
           end
 
+          associated_table_name = reflection_class.try(:table_name) || '<unknown>'
+          foreign_key = reflection.try(:foreign_key) || '<unknown>'
           db_description = \
             case reflection
             when ::ActiveRecord::Reflection::BelongsToReflection
               type_docstring = reflection_class
-              "`belongs_to` relation with `#{reflection_class}`. Database column `#{@klass.table_name}.#{reflection.foreign_key}`."
+              "`belongs_to` relation with `#{reflection_class}`. Database column `#{@klass.table_name}.#{foreign_key}`."
             when ::ActiveRecord::Reflection::HasOneReflection
               type_docstring = reflection_class
-              "`has_one` relation with `#{reflection_class}`. Database column `#{reflection_class.table_name}.#{reflection.foreign_key}`."
+              "`has_one` relation with `#{reflection_class}`. Database column `#{associated_table_name}.#{foreign_key}`."
             when ::ActiveRecord::Reflection::HasManyReflection
               type_docstring = "Array<#{reflection_class}>"
-              "`has_many` relation with `#{reflection_class}`. Database column `#{reflection_class.table_name}.#{reflection.foreign_key}`."
+              "`has_many` relation with `#{reflection_class}`. Database column `#{associated_table_name}.#{foreign_key}`."
             end
 
           doc_string << <<~DOC
