@@ -142,37 +142,57 @@ module Rails
           @klass.table_name[..-2]
         end
 
+        # @param reflection [ActiveRecord::Reflection::AbstractReflection]
+        # @return [Class]
+        def reflection_class(reflection)
+          reflection.klass
+        rescue ::NameError
+          Object
+        end
+
+        # @param reflection [ActiveRecord::Reflection::AbstractReflection]
+        # @return [String]
+        def reflection_foreign_key(reflection)
+          reflection.try(:foreign_key) || '<unknown>'
+        end
+
+        # @param klass [Class]
+        # @return [String]
+        def class_table_name(klass)
+          klass.try(:table_name) || '<unknown>'
+        end
+
         # @param doc_string [String]
         # @param attr_name [String]
         # @param reflection [ActiveRecord::Reflection::AbstractReflection]
         # @return [void]
         def document_relation(doc_string, attr_name, reflection)
-          reflection_class = begin
-            reflection.klass
-          rescue ::NameError
-            Object
-          end
-
-          associated_table_name = reflection_class.try(:table_name) || '<unknown>'
-          foreign_key = reflection.try(:foreign_key) || '<unknown>'
-          db_description = \
+          reflection_klass = reflection_class(reflection)
+          type_docstring, db_description = \
             case reflection
             when ::ActiveRecord::Reflection::BelongsToReflection
-              type_docstring = reflection_class
-              "`belongs_to` relation with `#{reflection_class}`. Database column `#{@klass.table_name}.#{foreign_key}`."
+              belongs_to_description(reflection_klass,
+                                     class_table_name(@klass),
+                                     reflection_foreign_key(reflection))
             when ::ActiveRecord::Reflection::HasOneReflection
-              type_docstring = reflection_class
-              "`has_one` relation with `#{reflection_class}`. Database column `#{associated_table_name}.#{foreign_key}`."
+              has_one_description(reflection_klass,
+                                  class_table_name(reflection_klass),
+                                  reflection_foreign_key(reflection))
             when ::ActiveRecord::Reflection::HasManyReflection
-              type_docstring = "Array<#{reflection_class}>"
-              "`has_many` relation with `#{reflection_class}`. Database column `#{associated_table_name}.#{foreign_key}`."
+              has_many_description(reflection_klass,
+                                   class_table_name(reflection_klass),
+                                   reflection_foreign_key(reflection))
+            when ::ActiveRecord::Reflection::ThroughReflection
+              through_description(reflection)
+            else
+              [::Object.to_s, '']
             end
 
           doc_string << <<~DOC
-            #     # #{db_description}
+            #     ##{db_description}
             #     # @param val [#{type_docstring}, nil]
             #     def #{attr_name}=(val); end
-            #     # #{db_description}
+            #     ##{db_description}
             #     # @return [#{type_docstring}, nil]
             #     def #{attr_name}; end
           DOC
@@ -187,7 +207,7 @@ module Rails
             model_class.reflections[klass_relation_name]&.options&.[](:as)&.to_sym == attr_name.to_sym
           end
 
-          classes_string = classes.join(', ')
+          classes_string = classes.empty? ? ::Object.to_s : classes.join(', ')
           doc_string << <<~DOC
             #     # Polymorphic relation. Database columns `#{@klass.table_name}.#{attr_name}_id` and `#{@klass.table_name}.#{attr_name}_type`.
             #     # @param val [#{classes_string}, nil]
@@ -196,6 +216,91 @@ module Rails
             #     # @return [#{classes_string}, nil]
             #     def #{attr_name}; end
           DOC
+        end
+
+        # @param reflection [ActiveRecord::Reflection::AbstractReflection]
+        # @return [Array<String>]
+        def through_description(reflection)
+          through_klass = reflection_class(reflection.through_reflection)
+
+          case (reflection.__send__(:delegate_reflection) rescue nil)
+          when ::ActiveRecord::Reflection::HasOneReflection
+            has_one_description(reflection_class(reflection.source_reflection),
+                                class_table_name(through_klass),
+                                reflection_foreign_key(reflection.source_reflection),
+                                through: through_klass)
+          when ::ActiveRecord::Reflection::HasManyReflection
+            has_many_description(reflection_class(reflection.source_reflection),
+                                 class_table_name(through_klass),
+                                 reflection_foreign_key(reflection.source_reflection),
+                                 through: through_klass)
+          else
+            [::Object.to_s, '']
+          end
+        end
+
+        # @param through [Class, nil]
+        # @return [String]
+        def through_sentence(through = nil)
+          return '' unless through
+
+          " through `#{through}`"
+        end
+
+        # @param table_name [String]
+        # @param foreign_key [String]
+        # @param through [Class, nil]
+        # @return [String]
+        def column_description(table_name, foreign_key, through = nil)
+          return '' if through
+
+          " Database column `#{table_name}.#{foreign_key}`."
+        end
+
+        # @param relation [Symbol, String]
+        # @param klass [Class]
+        # @param table_name [String]
+        # @param foreign_key [String]
+        # @param through [Class, nil]
+        # @return [String]
+        def relation_description(relation, klass, table_name, foreign_key, through = nil)
+          " `#{relation}` relation with `#{klass}`#{through_sentence(through)}.#{column_description(table_name, foreign_key, through)}"
+        end
+
+
+        # @param klass [Class]
+        # @param table_name [String]
+        # @param foreign_key [String]
+        # @param :through [Class, nil]
+        # @return [Array<String>] Type docstring followed by the description of the method.
+        def has_many_description(klass, table_name, foreign_key, through: nil)
+          type_docstring = "Array<#{klass}>"
+          desc = relation_description(:has_many, klass, table_name, foreign_key, through)
+
+          [type_docstring, desc]
+        end
+
+        # @param klass [Class]
+        # @param table_name [String]
+        # @param foreign_key [String]
+        # @param :through [Class, nil]
+        # @return [Array<String>] Type docstring followed by the description of the method.
+        def has_one_description(klass, table_name, foreign_key, through: nil)
+          type_docstring = klass
+          desc = relation_description(:has_one, klass, table_name, foreign_key, through)
+
+          [type_docstring, desc]
+        end
+
+        # @param klass [Class]
+        # @param table_name [String]
+        # @param foreign_key [String]
+        # @return [Array<String>] Type docstring followed by the description of the method.
+        def belongs_to_description(klass, table_name, foreign_key)
+          type_docstring = klass
+          desc = relation_description(:belongs_to, klass, table_name, foreign_key)
+
+          [type_docstring, desc]
         end
 
         # @param attr_type [ActiveModel::Type::Value]

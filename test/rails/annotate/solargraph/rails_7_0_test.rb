@@ -288,6 +288,12 @@ module Rails
             +#     # `belongs_to` relation with `Author`. Database column `essays.author_id`.
             +#     # @return [Author, nil]
             +#     def author; end
+            +#     # `has_one` relation with `Image` through `Author`.
+            +#     # @param val [Image, nil]
+            +#     def image=(val); end
+            +#     # `has_one` relation with `Image` through `Author`.
+            +#     # @return [Image, nil]
+            +#     def image; end
             +#     # Database column `essays.id`, type: `integer`.
             +#     # @param val [Integer, nil]
             +#     def id=(val); end
@@ -396,6 +402,12 @@ module Rails
             +# %%<RailsAnnotateSolargraph:Start>%%
             +# @!parse
             +#   class Publisher < ApplicationRecord
+            +#     # `has_many` relation with `Author` through `Book`.
+            +#     # @param val [Array<Author>, nil]
+            +#     def authors=(val); end
+            +#     # `has_many` relation with `Author` through `Book`.
+            +#     # @return [Array<Author>, nil]
+            +#     def authors; end
             +#     # `has_many` relation with `Book`. Database column `books.publisher_id`.
             +#     # @param val [Array<Book>, nil]
             +#     def books=(val); end
