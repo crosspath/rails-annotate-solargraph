@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'set'
+require 'fileutils'
 
 require_relative "solargraph/version"
 require_relative "solargraph/configuration"
@@ -19,11 +20,16 @@ module Rails
       CONFIG = Configuration.new
       # @return [Set<Symbol>]
       VALID_MODIFICATION_METHODS = ::Set[:annotate, :remove_annotation].freeze
+      # @return [String]
+      SCHEMA_CLASS_NAME = 'AnnotateSolargraphSchema'
+      # @return [String]
+      SCHEMA_FILE_NAME = "annotate_solargraph_schema.rb"
 
       class << self
         # @return [Array<String>] Array of changed files.
         def generate
           title 'Generating model schema annotations'
+          create_schema_file
           modify_models :annotate
         end
 
@@ -48,6 +54,16 @@ module Rails
         private
 
         include TerminalColors
+
+        def create_schema_file
+          schema_file = ::File.join(::Rails.root, MODEL_DIR, SCHEMA_FILE_NAME)
+          return unless CONFIG.schema_file? && !::File.exist?(schema_file)
+
+          ::FileUtils.touch(schema_file)
+          ::File.write schema_file, <<~SCHEMA
+            module AnnotateSolargraphSchema; end
+          SCHEMA
+        end
 
         # @param method [Symbol] Name of the method that will be called on every loaded Model
         # @return [Array<String>] Array of changed files.

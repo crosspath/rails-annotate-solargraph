@@ -63,9 +63,29 @@ You can change the gem's default configuration like so:
 ```ruby
 # config/initializers/rails_annotate_solargraph.rb
 
-Rails::Annotate::Solargraph.configure do |conf|
-    conf.annotation_position = :top # `:bottom` by default
+if ::Rails.env.development?
+    ::Rails::Annotate::Solargraph.configure do |conf|
+        conf.annotation_position = :top # `:schema_file` by default
+    end
 end
+```
+
+#### annotation_position
+
+There are a few values for this option:
+
+- `:schema_file` -- default value, annotations get saved to a special file `app/models/annotate_solargraph_schema.rb`
+- `:bottom` -- annotations are appended to the model files
+- `:top` -- annotations are prepended to the model files
+
+### Update
+
+To update this gem you should generate the rakefiles once again. Overwrite them.
+
+```sh
+$ rails g annotate:solargraph:install
+$ rake annotate:solargraph:remove
+$ rake annotate:solargraph:generate
 ```
 
 ## Development

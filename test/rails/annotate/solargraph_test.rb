@@ -8,13 +8,13 @@ class Rails::Annotate::SolargraphTest < Minitest::Test
   end
 
   def test_configure
-    assert_equal :bottom, Rails::Annotate::Solargraph::CONFIG.annotation_position
+    assert_equal :schema_file, Rails::Annotate::Solargraph::CONFIG.annotation_position
     Rails::Annotate::Solargraph.configure do |conf|
       assert conf.is_a?(::Rails::Annotate::Solargraph::Configuration)
       assert_raises Rails::Annotate::Solargraph::Error do
         conf.annotation_position = :incorrect
       end
-      assert_equal :bottom, conf.annotation_position
+      assert_equal :schema_file, conf.annotation_position
       conf.annotation_position = :top
       assert_equal :top, conf.annotation_position
     end

@@ -1,17 +1,13 @@
 # frozen_string_literal: true
 
+require 'fileutils'
+
 module Rails
   module Annotate
     module Solargraph
       class Model
         using TerminalColors::Refinement
 
-        # @return [String]
-        ANNOTATION_START = "\n# %%<RailsAnnotateSolargraph:Start>%%"
-        # @return [String]
-        ANNOTATION_END = "%%<RailsAnnotateSolargraph:End>%%\n\n"
-        # @return [Regexp]
-        ANNOTATION_REGEXP = /#{ANNOTATION_START}.*#{ANNOTATION_END}/m.freeze
         # @return [Regexp]
         MAGIC_COMMENT_REGEXP = /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/.freeze
 
@@ -40,6 +36,26 @@ module Rails
               ::Object.to_s
             end
           end
+
+          # @param klass [Class]
+          # @return [String]
+          def annotation_start(klass = nil)
+            table_name = klass && CONFIG.schema_file? ? ":#{klass.table_name}" : ''
+            "\n# %%<RailsAnnotateSolargraph:Start#{table_name}>%%"
+          end
+
+          # @param klass [Class]
+          # @return [String]
+          def annotation_end(klass = nil)
+            table_name = klass && CONFIG.schema_file? ? ":#{klass.table_name}" : ''
+            "%%<RailsAnnotateSolargraph:End#{table_name}>%%\n\n"
+          end
+
+          # @param klass [Class]
+          # @return [Regexp]
+          def annotation_regexp(klass = nil)
+            /#{annotation_start(klass)}.*#{annotation_end(klass)}/m
+          end
         end
 
         # @return [String]
@@ -51,7 +67,23 @@ module Rails
         # @param klass [Class]
         def initialize(klass)
           @klass = klass
-          @file_name = ::File.join(::Rails.root, MODEL_DIR, "#{klass.to_s.underscore}.rb")
+          base_file_name = CONFIG.schema_file? ? SCHEMA_FILE_NAME : "#{klass.to_s.underscore}.rb"
+          @file_name = ::File.join(::Rails.root, MODEL_DIR, base_file_name)
+        end
+
+        # @return [String]
+        def annotation_start
+          self.class.annotation_start(@klass)
+        end
+
+        # @return [String]
+        def annotation_end
+          self.class.annotation_end(@klass)
+        end
+
+        # @return [Regexp]
+        def annotation_regexp
+          self.class.annotation_regexp(@klass)
         end
 
         # @param :write [Boolean]
@@ -79,8 +111,10 @@ module Rails
         # @param :write [Boolean]
         # @return [Array<String>] Old file content followed by new content.
         def remove_annotation(write: true)
+          return ['', ''] unless ::File.exist?(@file_name)
+
           file_content = ::File.read(@file_name)
-          new_file_content = file_content.sub(ANNOTATION_REGEXP, '')
+          new_file_content = file_content.sub(annotation_regexp, '')
           result = [file_content, new_file_content]
           return result unless write
           return result if file_content == new_file_content
@@ -93,7 +127,7 @@ module Rails
         def annotation
           doc_string = ::String.new
           doc_string << <<~DOC
-            #{ANNOTATION_START}
+            #{annotation_start}
             # @!parse
             #   class #{@klass} < #{@klass.superclass}
           DOC
@@ -117,7 +151,7 @@ module Rails
 
           doc_string << <<~DOC.chomp
             #   end
-            # #{ANNOTATION_END}
+            # #{annotation_end}
           DOC
         end
 
@@ -133,6 +167,7 @@ module Rails
         # @param content [String]
         # @return [void]
         def write_file(file_name, content)
+          ::FileUtils.touch(file_name) unless ::File.exists?(file_name)
           ::File.write(file_name, content)
           puts "modify".rjust(12).with_styles(:bold, :green) + "  #{relative_file_name(file_name)}"
         end

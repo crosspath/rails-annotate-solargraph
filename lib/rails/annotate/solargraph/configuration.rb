@@ -9,10 +9,10 @@ module Rails
         # @return [Symbol]
         attr_reader :annotation_position
 
-        ANNOTATION_POSITIONS = ::Set[:bottom, :top].freeze
+        ANNOTATION_POSITIONS = ::Set[:bottom, :top, :schema_file].freeze
 
         def initialize
-          @annotation_position = :bottom
+          @annotation_position = :schema_file
         end
 
         # @param val [Symbol]
@@ -21,6 +21,10 @@ module Rails
            unless ANNOTATION_POSITIONS.include?(val)
 
           @annotation_position = val
+        end
+
+        def schema_file?
+          @annotation_position == :schema_file
         end
       end
     end

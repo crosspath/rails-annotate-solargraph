@@ -13,6 +13,7 @@ module Rails
         MODEL_FILES = %w[app/models/author.rb app/models/book.rb app/models/essay.rb app/models/image.rb app/models/publisher.rb].sort.freeze
 
         def setup
+          @schema_file = false
           @original_pwd = ::Dir.pwd
           ::Dir.chdir RAILS_PROJECT_PATH
           @git = ::Git.init(::Dir.pwd)
@@ -23,6 +24,7 @@ module Rails
         end
 
         def teardown
+          @schema_file = false
           @git.clean(force: true)
           @git.reset_hard
           @git = nil
@@ -56,6 +58,18 @@ module Rails
           assert @git.diff.none?
         end
 
+        def test_annotate_models_in_schema_file
+          assert system 'bundle exec rails g annotate:solargraph:install'
+          assert system 'SCHEMA_FILE=true bundle exec rake annotate:solargraph:generate'
+          @git.add schema_file_name
+          assert_equal 1, @git.diff.entries.size
+          assert_equal schema_file_name, @git.diff.entries.first.path
+
+          @schema_file = true
+          verify_annotations
+          @schema_file = false
+        end
+
         def test_annotate_after_migration
           assert system 'bundle exec rails g annotate:solargraph:install'
           assert system 'bundle exec rails g model NewModel'
@@ -68,8 +82,6 @@ module Rails
           assert_equal 'app/models/new_model.rb', diff.path
           assert_equal 'new', diff.type
           expected_patch = <<~PATCH.chomp
-            +
-            +# %%<RailsAnnotateSolargraph:Start>%%
             +# @!parse
             +#   class NewModel < ApplicationRecord
             +#     # Database column `new_models.id`, type: `integer`.
@@ -91,27 +103,55 @@ module Rails
             +#     # @return [Time, nil]
             +#     def updated_at; end
             +#   end
-            +# %%<RailsAnnotateSolargraph:End>%%
-            +
           PATCH
           assert diff.patch.include? expected_patch
 
           verify_annotations
         end
 
-        private
+        def test_annotate_after_migration_in_schema_file
+          assert system 'bundle exec rails g annotate:solargraph:install'
+          assert system 'bundle exec rails g model NewModel'
+          assert system 'SCHEMA_FILE=true bundle exec rails db:migrate'
 
-        def file_diff(file_name)
-          @git.diff.entries.find { _1.path == file_name }
+          @git.add 'app/models/new_model.rb'
+          @git.add schema_file_name
+          assert_equal 3, @git.diff.entries.size
+
+          @schema_file = true
+          diff = file_diff 'app/models/new_model.rb'
+          assert_equal schema_file_name, diff.path
+          assert_equal 'new', diff.type
+          expected_patch = <<~PATCH.chomp
+            +# @!parse
+            +#   class NewModel < ApplicationRecord
+            +#     # Database column `new_models.id`, type: `integer`.
+            +#     # @param val [Integer, nil]
+            +#     def id=(val); end
+            +#     # Database column `new_models.id`, type: `integer`.
+            +#     # @return [Integer, nil]
+            +#     def id; end
+            +#     # Database column `new_models.created_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def created_at=(val); end
+            +#     # Database column `new_models.created_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def created_at; end
+            +#     # Database column `new_models.updated_at`, type: `datetime`.
+            +#     # @param val [Time, nil]
+            +#     def updated_at=(val); end
+            +#     # Database column `new_models.updated_at`, type: `datetime`.
+            +#     # @return [Time, nil]
+            +#     def updated_at; end
+            +#   end
+          PATCH
+          assert diff.patch.include? expected_patch
+
+          verify_annotations
         end
 
-        def verify_annotations
-          diff = file_diff 'app/models/author.rb'
-          assert_equal 'modified', diff.type
-          assert_equal 'app/models/author.rb', diff.path
-          expected_patch = <<~PATCH.chomp
-            +
-            +# %%<RailsAnnotateSolargraph:Start>%%
+        PATCHES = {
+          'app/models/author.rb' => <<~PATCH.chomp,
             +# @!parse
             +#   class Author < ApplicationRecord
             +#     # `has_many` relation with `Book`. Database column `books.author_id`.
@@ -163,18 +203,8 @@ module Rails
             +#     # @return [Time, nil]
             +#     def updated_at; end
             +#   end
-            +# %%<RailsAnnotateSolargraph:End>%%
-            +
           PATCH
-
-          assert diff.patch.include? expected_patch
-
-          diff = file_diff 'app/models/book.rb'
-          assert_equal 'modified', diff.type
-          assert_equal 'app/models/book.rb', diff.path
-          expected_patch = <<~PATCH.chomp
-            +
-            +# %%<RailsAnnotateSolargraph:Start>%%
+          'app/models/book.rb' => <<~PATCH.chomp,
             +# @!parse
             +#   class Book < ApplicationRecord
             +#     # `belongs_to` relation with `Author`. Database column `books.author_id`.
@@ -268,18 +298,8 @@ module Rails
             +#     # @return [Integer, nil]
             +#     def publisher_id; end
             +#   end
-            +# %%<RailsAnnotateSolargraph:End>%%
-            +
           PATCH
-
-          assert diff.patch.include? expected_patch
-
-          diff = file_diff 'app/models/essay.rb'
-          assert_equal 'modified', diff.type
-          assert_equal 'app/models/essay.rb', diff.path
-          expected_patch = <<~PATCH.chomp
-            +
-            +# %%<RailsAnnotateSolargraph:Start>%%
+          'app/models/essay.rb' => <<~PATCH.chomp,
             +# @!parse
             +#   class Essay < ApplicationRecord
             +#     # `belongs_to` relation with `Author`. Database column `essays.author_id`.
@@ -331,18 +351,8 @@ module Rails
             +#     # @return [Time, nil]
             +#     def updated_at; end
             +#   end
-            +# %%<RailsAnnotateSolargraph:End>%%
-            +
           PATCH
-
-          assert diff.patch.include? expected_patch
-
-          diff = file_diff 'app/models/image.rb'
-          assert_equal 'modified', diff.type
-          assert_equal 'app/models/image.rb', diff.path
-          expected_patch = <<~PATCH.chomp
-            +
-            +# %%<RailsAnnotateSolargraph:Start>%%
+          'app/models/image.rb' => <<~PATCH.chomp,
             +# @!parse
             +#   class Image < ApplicationRecord
             +#     # Polymorphic relation. Database columns `images.imageable_id` and `images.imageable_type`.
@@ -388,18 +398,8 @@ module Rails
             +#     # @return [Time, nil]
             +#     def updated_at; end
             +#   end
-            +# %%<RailsAnnotateSolargraph:End>%%
-            +
           PATCH
-
-          assert diff.patch.include? expected_patch
-
-          diff = file_diff 'app/models/publisher.rb'
-          assert_equal 'modified', diff.type
-          assert_equal 'app/models/publisher.rb', diff.path
-          expected_patch = <<~PATCH.chomp
-            +
-            +# %%<RailsAnnotateSolargraph:Start>%%
+          'app/models/publisher.rb' => <<~PATCH.chomp,
             +# @!parse
             +#   class Publisher < ApplicationRecord
             +#     # `has_many` relation with `Author` through `Book`.
@@ -439,9 +439,47 @@ module Rails
             +#     # @return [Time, nil]
             +#     def updated_at; end
             +#   end
-            +# %%<RailsAnnotateSolargraph:End>%%
-            +
           PATCH
+        }
+
+        private
+
+        def model_patch(model_file_name)
+          PATCHES.fetch model_file_name
+        end
+
+        def schema_file_name
+          "app/models/#{::Rails::Annotate::Solargraph::SCHEMA_FILE_NAME}"
+        end
+
+        def file_diff(file_name)
+          file_name = schema_file_name if @schema_file
+          @git.diff.entries.find { _1.path == file_name }
+        end
+
+        def verify_annotations
+          diff = file_diff 'app/models/author.rb'
+          expected_patch = model_patch 'app/models/author.rb'
+
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/book.rb'
+          expected_patch = model_patch 'app/models/book.rb'
+
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/essay.rb'
+          expected_patch = model_patch 'app/models/essay.rb'
+
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/image.rb'
+          expected_patch = model_patch 'app/models/image.rb'
+
+          assert diff.patch.include? expected_patch
+
+          diff = file_diff 'app/models/publisher.rb'
+          expected_patch = model_patch 'app/models/publisher.rb'
 
           assert diff.patch.include? expected_patch
         end
