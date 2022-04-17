@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.4.0] - 2022-04-17
+
+- Annotations get saved to a schema file by default `app/models/annotate_solargraph_schema.rb`
+
 ## [0.3.0] - 2022-04-17
 
 - `has_many :through` and `has_one :through` relations get documented
