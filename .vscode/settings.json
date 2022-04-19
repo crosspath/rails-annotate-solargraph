@@ -1,6 +1,10 @@
 {
   "cSpell.words": [
     "activerecord",
+    "citext",
+    "datetime",
+    "gsub",
+    "inet",
     "klass",
     "rakefile",
     "solargraph",

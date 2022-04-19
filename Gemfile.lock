@@ -3,6 +3,8 @@ PATH
   specs:
     rails-annotate-solargraph (0.4.0)
       rails (>= 5.0, < 8.0)
+      solargraph
+      yard
 
 GEM
   remote: https://rubygems.org/

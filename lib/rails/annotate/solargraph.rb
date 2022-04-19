@@ -23,7 +23,11 @@ module Rails
       # @return [String]
       SCHEMA_CLASS_NAME = 'AnnotateSolargraphSchema'
       # @return [String]
-      SCHEMA_FILE_NAME = "annotate_solargraph_schema.rb"
+      SOLARGRAPH_FILE_NAME = '.solargraph.yml'
+      # @return [String]
+      SCHEMA_FILE_NAME = '.annotate_solargraph_schema'
+      # @return [String]
+      SCHEMA_RAILS_PATH = SCHEMA_FILE_NAME
 
       class << self
         # @return [Array<String>] Array of changed files.
@@ -56,13 +60,10 @@ module Rails
         include TerminalColors
 
         def create_schema_file
-          schema_file = ::File.join(::Rails.root, MODEL_DIR, SCHEMA_FILE_NAME)
-          return unless CONFIG.schema_file? && !::File.exist?(schema_file)
+          schema_file = ::File.join ::Rails.root, SCHEMA_RAILS_PATH
+          return if ::File.exist?(schema_file)
 
-          ::FileUtils.touch(schema_file)
-          ::File.write schema_file, <<~SCHEMA
-            module AnnotateSolargraphSchema; end
-          SCHEMA
+          system 'rails g annotate:solargraph:install'
         end
 
         # @param method [Symbol] Name of the method that will be called on every loaded Model

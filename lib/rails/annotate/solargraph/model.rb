@@ -11,32 +11,27 @@ module Rails
         # @return [Regexp]
         MAGIC_COMMENT_REGEXP = /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/.freeze
 
-        class << self
-          # @param type [Symbol, String, nil]
-          # @return [String]
-          def active_record_type_to_yard(type)
-            case type&.to_sym
-            when :float
-              ::Float.to_s
-            when :integer
-              ::Integer.to_s
-            when :decimal
-              ::BigDecimal.to_s
-            when :datetime, :timestamp, :time
-              ::Time.to_s
-            when :json, :jsonb
-              ::Hash.to_s
-            when :date
-              ::Date.to_s
-            when :text, :string, :binary, :inet, :uuid
-              ::String.to_s
-            when :boolean
-              'Boolean'
-            else
-              ::Object.to_s
-            end
-          end
+        # @return [Hash{Symbol => String}]
+        TYPE_MAP = {
+          float: 'BigDecimal',
+          decimal: 'BigDecimal',
+          integer: 'Integer',
+          datetime: 'ActiveSupport::TimeWithZone',
+          date: 'Date',
+          string: 'String',
+          boolean: 'Boolean',
+          text: 'String',
+          jsonb: 'Hash',
+          citext: 'String',
+          json: 'Hash',
+          bigint: 'Integer',
+          uuid: 'String',
+          inet: 'IPAddr'
+        }
+        TYPE_MAP.default = 'Object'
+        TYPE_MAP.freeze
 
+        class << self
           # @param klass [Class]
           # @return [String]
           def annotation_start(klass = nil)
@@ -67,8 +62,7 @@ module Rails
         # @param klass [Class]
         def initialize(klass)
           @klass = klass
-          base_file_name = CONFIG.schema_file? ? SCHEMA_FILE_NAME : "#{klass.to_s.underscore}.rb"
-          @file_name = ::File.join(::Rails.root, MODEL_DIR, base_file_name)
+          @file_name = CONFIG.schema_file? ? SCHEMA_RAILS_PATH : ::File.join(::Rails.root, MODEL_DIR, "#{klass.to_s.underscore}.rb")
         end
 
         # @return [String]
@@ -128,7 +122,7 @@ module Rails
           doc_string = ::String.new
           doc_string << <<~DOC
             #{annotation_start}
-            # @!parse
+            ##{parse_clause}
             #   class #{@klass} < #{@klass.superclass}
           DOC
 
@@ -153,9 +147,20 @@ module Rails
             #   end
             # #{annotation_end}
           DOC
+
+          # uncomment the generated annotations if they're saved in the schema file
+          return doc_string.gsub(/^#\ {3}/, '').gsub(/^#\n/, "\n") if CONFIG.schema_file?
+
+          doc_string
         end
 
         private
+
+        def parse_clause
+          return if CONFIG.schema_file?
+
+          " @!parse\n#"
+        end
 
         # @param file_name [String]
         # @return [String]
@@ -344,7 +349,7 @@ module Rails
           return attr_type.coder.object_class.to_s if attr_type.respond_to?(:coder) && attr_type.coder.respond_to?(:object_class)
           return 'Object' if attr_type.respond_to?(:coder) && attr_type.coder.is_a?(::ActiveRecord::Coders::JSON)
 
-          self.class.active_record_type_to_yard(attr_type.type)
+          TYPE_MAP[attr_type.type]
         end
       end
     end

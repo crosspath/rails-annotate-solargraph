@@ -19,6 +19,7 @@ if ::Rails.env.development?
       next unless ::Rake::Task.task_defined?(task)
 
       ::Rake::Task[task].enhance do
+        system 'yard gems' unless ENV['TEST']
         ::Rake::Task['annotate:solargraph:generate'].invoke
       end
     end
