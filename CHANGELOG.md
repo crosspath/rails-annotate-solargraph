@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [0.5.0] - 2022-04-19
+
+- Add some static comments to the schema file to improve general Rails intellisense
+- Rename schema file from `app/models/annotate_solargraph_schema.rb` to `.annotate-solargraph-schema`
+- Generate schema file as a regular ruby file
+- Add `yard` and `solargraph` as dependencies
+- Add `.solargraph.yml` to the installation generator
+
 ## [0.4.0] - 2022-04-17
 
 - Annotations get saved to a schema file by default `app/models/annotate_solargraph_schema.rb`
