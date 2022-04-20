@@ -8,6 +8,11 @@ require_relative "solargraph/configuration"
 require_relative "solargraph/terminal_colors"
 require_relative "solargraph/model"
 
+begin
+  require_relative "overrides"
+rescue
+  nil
+end
 
 module Rails
   module Annotate
