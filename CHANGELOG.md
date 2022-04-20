@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.5.3] - 2022-04-20
+
+- fix a minor bug which in some rails apps prevented scopes from being documented
+
 ## [0.5.2] - 2022-04-20
 
 - proxy method overrides get loaded during app initialization

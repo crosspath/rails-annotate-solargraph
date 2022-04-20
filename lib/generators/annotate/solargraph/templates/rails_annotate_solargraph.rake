@@ -5,13 +5,11 @@ if ::Rails.env.development?
     namespace :solargraph do
       desc "Add YARD comments documenting the models' schemas"
       task generate: :environment do
-        ::ENV['ANNOTATE_SOLARGRAPH_RAKE_TASK'] = 'true'
         ::Rails::Annotate::Solargraph.generate
       end
 
       desc "Remove YARD comments documenting the models' schemas"
       task remove: :environment do
-        ::ENV['ANNOTATE_SOLARGRAPH_RAKE_TASK'] = 'true'
         ::Rails::Annotate::Solargraph.remove
       end
     end
