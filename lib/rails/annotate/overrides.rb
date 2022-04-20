@@ -5,6 +5,8 @@ class ActiveRecord::Base
     alias orig_scope scope
 
     def scope(*args, **kwargs, &block)
+      return orig_scope(*args, **kwargs, &block) unless ::ENV['ANNOTATE_SOLARGRAPH_RAKE_TASK']
+
       file_path, scope_line_number = caller.first.split(':')
       scope_line_number = scope_line_number.to_i
       scope_name = args.first

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rails-annotate-solargraph (0.5.1)
+    rails-annotate-solargraph (0.5.2)
       rails (>= 5.0, < 8.0)
       solargraph
       yard

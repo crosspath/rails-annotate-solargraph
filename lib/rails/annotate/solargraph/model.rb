@@ -35,7 +35,10 @@ module Rails
 
         class << self
           # @return [Hash{Class => Array<Rails::Annotate::Solargraph::Model::Scope>}]
-          attr_reader :scopes
+          def scopes
+            @scopes ||= {}
+            @scopes
+          end
 
           # @param name [Symbol]
           # @param model_class [Class]

@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.5.2] - 2022-04-20
+
+- proxy method overrides get loaded during app initialization
+
 ## [0.5.1] - 2022-04-20
 
 - `ActiveRecord` scopes are now documented
