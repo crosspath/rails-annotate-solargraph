@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.5.1] - 2022-04-20
+
+- `ActiveRecord` scopes are now documented
+
 ## [0.5.0] - 2022-04-19
 
 - Add some static comments to the schema file to improve general Rails intellisense
