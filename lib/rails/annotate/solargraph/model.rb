@@ -8,6 +8,8 @@ module Rails
       class Model
         using TerminalColors::Refinement
 
+        Scope = ::Struct.new(:name, :model_class, :proc_parameters, :definition, keyword_init: true)
+
         # @return [Regexp]
         MAGIC_COMMENT_REGEXP = /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/.freeze
 
@@ -32,6 +34,21 @@ module Rails
         TYPE_MAP.freeze
 
         class << self
+          # @return [Hash{Class => Array<Rails::Annotate::Solargraph::Model::Scope>}]
+          attr_reader :scopes
+
+          # @param name [Symbol]
+          # @param model_class [Class]
+          # @param proc_parameters [Array<Symbol>]
+          # @param definition [String]
+          def add_scope(name, model_class, proc_parameters, definition)
+            scope = Scope.new(name: name, model_class: model_class, proc_parameters: proc_parameters, definition: definition)
+            @scopes ||= {}
+            @scopes[model_class] ||= []
+            @scopes[model_class] << scope
+            @scopes[model_class].sort_by! { |scope| scope.name }
+          end
+
           # @param klass [Class]
           # @return [String]
           def annotation_start(klass = nil)
@@ -95,7 +112,6 @@ module Rails
           end
 
           return new_file_content unless write
-          # debugger
           return new_file_content if old_content == new_file_content
 
           write_file @file_name, new_file_content
@@ -126,22 +142,9 @@ module Rails
             #   class #{@klass} < #{@klass.superclass}
           DOC
 
-          @klass.reflections.sort.each do |attr_name, reflection|
-            next document_polymorphic_relation(doc_string, attr_name, reflection) if reflection.polymorphic?
-
-            document_relation(doc_string, attr_name, reflection)
-          end
-
-          @klass.attribute_types.each do |name, attr_type|
-            doc_string << <<~DOC
-              #     # Database column `#{@klass.table_name}.#{name}`, type: `#{attr_type.type}`.
-              #     # @param val [#{yard_type attr_type}, nil]
-              #     def #{name}=(val); end
-              #     # Database column `#{@klass.table_name}.#{name}`, type: `#{attr_type.type}`.
-              #     # @return [#{yard_type attr_type}, nil]
-              #     def #{name}; end
-            DOC
-          end
+          document_scopes(doc_string)
+          document_relations(doc_string)
+          document_fields(doc_string)
 
           doc_string << <<~DOC.chomp
             #   end
@@ -156,6 +159,47 @@ module Rails
 
         private
 
+        # @param doc_string [String]
+        # @return [void]
+        def document_scopes(doc_string)
+          self.class.scopes[@klass]&.each do |scope|
+            doc_string << <<~DOC
+              #     # Scope `#{scope.name.inspect}`.
+              #     #
+              #     #     #{scope.definition}
+              #     #
+              #     # @return [Array<#{@klass}>, nil]
+              #     def self.#{scope.name}(#{scope.proc_parameters.join(', ')}); end
+            DOC
+          end
+        end
+
+        # @param doc_string [String]
+        # @return [void]
+        def document_relations(doc_string)
+          @klass.reflections.sort.each do |attr_name, reflection|
+            next document_polymorphic_relation(doc_string, attr_name, reflection) if reflection.polymorphic?
+
+            document_relation(doc_string, attr_name, reflection)
+          end
+        end
+
+        # @param doc_string [String]
+        # @return [void]
+        def document_fields(doc_string)
+          @klass.attribute_types.each do |name, attr_type|
+            doc_string << <<~DOC
+              #     # Database column `#{@klass.table_name}.#{name}`, type: `#{attr_type.type}`.
+              #     # @param val [#{yard_type attr_type}, nil]
+              #     def #{name}=(val); end
+              #     # Database column `#{@klass.table_name}.#{name}`, type: `#{attr_type.type}`.
+              #     # @return [#{yard_type attr_type}, nil]
+              #     def #{name}; end
+            DOC
+          end
+        end
+
+        # @return [String, nil]
         def parse_clause
           return if CONFIG.schema_file?
 

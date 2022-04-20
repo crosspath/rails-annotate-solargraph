@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require 'byebug'
 
 class Rails::Annotate::SolargraphTest < Minitest::Test
   def test_that_it_has_a_version_number

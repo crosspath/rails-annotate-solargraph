@@ -8,6 +8,7 @@ require_relative "solargraph/configuration"
 require_relative "solargraph/terminal_colors"
 require_relative "solargraph/model"
 
+
 module Rails
   module Annotate
     module Solargraph
@@ -75,6 +76,7 @@ module Rails
           changed_files = []
           model_files = ::Dir[::File.join(::Rails.root, MODEL_DIR, '**/*.rb')].map { |file| file.sub("#{::Rails.root}/", '') }.to_set
 
+          require_relative "overrides"
           ::Rails.application.eager_load!
           model_classes.each do |subclass|
             subclass_file = ::File.join MODEL_DIR, "#{subclass.to_s.underscore}.rb"

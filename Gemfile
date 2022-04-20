@@ -5,6 +5,7 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in rails-annotate-solargraph.gemspec
 gemspec
 
+gem 'byebug'
 gem 'debug'
 gem 'git'
 gem "minitest", "~> 5.0"

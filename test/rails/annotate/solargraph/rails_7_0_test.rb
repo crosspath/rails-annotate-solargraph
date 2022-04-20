@@ -187,6 +187,12 @@ module Rails
           PATCH
           'app/models/author.rb' => <<~PATCH.chomp,
             +#   class Author < ApplicationRecord
+            +#     # Scope `:since`.
+            +#     #
+            +#     #     scope :since, ->(ago) { where("created_at > ?", ago) }
+            +#     #
+            +#     # @return [Array<Author>, nil]
+            +#     def self.since(ago); end
             +#     # `has_many` relation with `Book`. Database column `books.author_id`.
             +#     # @param val [Array<Book>, nil]
             +#     def books=(val); end
@@ -239,6 +245,36 @@ module Rails
           PATCH
           'app/models/book.rb' => <<~PATCH.chomp,
             +#   class Book < ApplicationRecord
+            +#     # Scope `:expensive`.
+            +#     #
+            +#     #     scope :expensive, -> { where('amount > ?', 250) }
+            +#     #
+            +#     # @return [Array<Book>, nil]
+            +#     def self.expensive(); end
+            +#     # Scope `:hard_cover`.
+            +#     #
+            +#     #     scope :hard_cover, -> { where(hard_cover: true) }
+            +#     #
+            +#     # @return [Array<Book>, nil]
+            +#     def self.hard_cover(); end
+            +#     # Scope `:more_expensive_than`.
+            +#     #
+            +#     #     scope :more_expensive_than, ->(price) { where('amount > ?', price) }
+            +#     #
+            +#     # @return [Array<Book>, nil]
+            +#     def self.more_expensive_than(price); end
+            +#     # Scope `:since`.
+            +#     #
+            +#     #     scope :since, ->(ago) { where("created_at > ?", ago) }
+            +#     #
+            +#     # @return [Array<Book>, nil]
+            +#     def self.since(ago); end
+            +#     # Scope `:soft_cover`.
+            +#     #
+            +#     #     scope :soft_cover, -> { where(hard_cover: false) }
+            +#     #
+            +#     # @return [Array<Book>, nil]
+            +#     def self.soft_cover(); end
             +#     # `belongs_to` relation with `Author`. Database column `books.author_id`.
             +#     # @param val [Author, nil]
             +#     def author=(val); end
@@ -333,6 +369,12 @@ module Rails
           PATCH
           'app/models/essay.rb' => <<~PATCH.chomp,
             +#   class Essay < ApplicationRecord
+            +#     # Scope `:since`.
+            +#     #
+            +#     #     scope :since, ->(ago) { where("created_at > ?", ago) }
+            +#     #
+            +#     # @return [Array<Essay>, nil]
+            +#     def self.since(ago); end
             +#     # `belongs_to` relation with `Author`. Database column `essays.author_id`.
             +#     # @param val [Author, nil]
             +#     def author=(val); end
@@ -385,6 +427,18 @@ module Rails
           PATCH
           'app/models/image.rb' => <<~PATCH.chomp,
             +#   class Image < ApplicationRecord
+            +#     # Scope `:between`.
+            +#     #
+            +#     #     scope :between, ->(from, to) { where("created_at > ? AND created_at < ?", from, to) }
+            +#     #
+            +#     # @return [Array<Image>, nil]
+            +#     def self.between(from, to); end
+            +#     # Scope `:since`.
+            +#     #
+            +#     #     scope :since, ->(ago) { where("created_at > ?", ago) }
+            +#     #
+            +#     # @return [Array<Image>, nil]
+            +#     def self.since(ago); end
             +#     # Polymorphic relation. Database columns `images.imageable_id` and `images.imageable_type`.
             +#     # @param val [Author, Book, nil]
             +#     def imageable=(val); end
@@ -431,6 +485,12 @@ module Rails
           PATCH
           'app/models/publisher.rb' => <<~PATCH.chomp,
             +#   class Publisher < ApplicationRecord
+            +#     # Scope `:since`.
+            +#     #
+            +#     #     scope :since, ->(ago) { where("created_at > ?", ago) }
+            +#     #
+            +#     # @return [Array<Publisher>, nil]
+            +#     def self.since(ago); end
             +#     # `has_many` relation with `Author` through `Book`.
             +#     # @param val [Array<Author>, nil]
             +#     def authors=(val); end
