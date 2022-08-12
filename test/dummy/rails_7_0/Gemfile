@@ -5,7 +5,7 @@ ruby "2.7.6"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.0.2", ">= 7.0.2.3"
-gem 'rails-annotate-solargraph', path: '../../'
+gem 'rails-annotate-solargraph', path: '../../../'
 
 gem 'solargraph'
 # Use sqlite3 as the database for Active Record

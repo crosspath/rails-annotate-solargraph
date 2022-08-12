@@ -8,8 +8,6 @@ module Rails
       class Model
         using TerminalColors::Refinement
 
-        Scope = ::Struct.new(:name, :model_class, :proc_parameters, :definition, keyword_init: true)
-
         # @return [Regexp]
         MAGIC_COMMENT_REGEXP = /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/.freeze
 
@@ -45,11 +43,17 @@ module Rails
           # @param proc_parameters [Array<Symbol>]
           # @param definition [String]
           def add_scope(name, model_class, proc_parameters, definition)
-            scope = Scope.new(name: name, model_class: model_class, proc_parameters: proc_parameters, definition: definition)
+            scope = Scope.new(
+              name: name,
+              model_class: model_class,
+              proc_parameters: proc_parameters,
+              definition: definition
+            )
+
             @scopes ||= {}
             @scopes[model_class] ||= []
             @scopes[model_class] << scope
-            @scopes[model_class].sort_by! { |scope| scope.name }
+            @scopes[model_class].sort_by!(&:name)
           end
 
           # @param klass [Class]
@@ -162,18 +166,16 @@ module Rails
 
         private
 
+        # @return [Array<Scope>]
+        def scopes
+          self.class.scopes[@klass]
+        end
+
         # @param doc_string [String]
         # @return [void]
         def document_scopes(doc_string)
-          self.class.scopes[@klass]&.each do |scope|
-            doc_string << <<~DOC
-              #     # Scope `#{scope.name.inspect}`.
-              #     #
-              #     #     #{scope.definition}
-              #     #
-              #     # @return [Array<#{@klass}>, nil]
-              #     def self.#{scope.name}(#{scope.proc_parameters.join(', ')}); end
-            DOC
+          scopes&.each do |scope|
+            doc_string << scope.documentation
           end
         end
 
@@ -219,9 +221,9 @@ module Rails
         # @param content [String]
         # @return [void]
         def write_file(file_name, content)
-          ::FileUtils.touch(file_name) unless ::File.exists?(file_name)
+          ::FileUtils.touch(file_name) unless ::File.exist?(file_name)
           ::File.write(file_name, content)
-          puts "modify".rjust(12).with_styles(:bold, :green) + "  #{relative_file_name(file_name)}"
+          puts "modify".rjust(12).with_styles(:bold, :green) + "  #{relative_file_name(file_name)} (#{@klass})"
         end
 
         # @return [String]

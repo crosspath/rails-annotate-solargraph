@@ -16,7 +16,10 @@ module Annotate
           template ::Rails::Annotate::Solargraph::SCHEMA_FILE_NAME, ::Rails::Annotate::Solargraph::SCHEMA_RAILS_PATH
 
           solargraph_config_file = ::File.join(::Rails.root, ::Rails::Annotate::Solargraph::SOLARGRAPH_FILE_NAME)
-          system 'solargraph config' unless ::File.exist? solargraph_config_file
+          unless ::File.exist? solargraph_config_file
+            template(::Rails::Annotate::Solargraph::SOLARGRAPH_FILE_NAME, ::Rails::Annotate::Solargraph::SOLARGRAPH_FILE_PATH)
+          end
+
           solargraph_config = ::YAML.load_file solargraph_config_file
           solargraph_config['include'] = solargraph_config['include'] || []
           solargraph_config['include'].unshift ::Rails::Annotate::Solargraph::SCHEMA_RAILS_PATH

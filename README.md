@@ -74,7 +74,7 @@ end
 
 There are a few values for this option:
 
-- `:schema_file` -- default value, annotations get saved to a special file `app/models/annotate_solargraph_schema.rb`
+- `:schema_file` -- default value, annotations get saved to a special file `.annotate_solargraph_schema`
 - `:bottom` -- annotations are appended to the model files
 - `:top` -- annotations are prepended to the model files
 
@@ -90,9 +90,59 @@ $ rake annotate:solargraph:generate
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+### Setup
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To setup this gem for development you should use the setup script.
+
+```sh
+$ bin/setup
+```
+
+### Console
+
+You can access an IRB with this entire gem preloaded like this
+
+```sh
+$ bin/console
+```
+
+### Tests
+
+You can run all tests with:
+
+```sh
+$ rake test
+```
+
+All unit tests:
+
+```sh
+$ rake test:unit
+```
+
+All integration tests:
+
+```sh
+$ rake test:integration
+```
+
+### Release
+
+To release a new version, update the version number in `version.rb`, and then run
+
+```sh
+$ bundle exec rake release
+```
+
+This will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+
+### Local installation
+
+To install this gem onto your local machine, run
+
+```sh
+$ bundle exec rake install
+```
 
 ## Contributing
 

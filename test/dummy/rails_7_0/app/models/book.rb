@@ -10,6 +10,14 @@ class Book < ApplicationRecord
   scope :hard_cover, -> { where(hard_cover: true) }
   scope :soft_cover, -> { where(hard_cover: false) }
   scope :expensive, -> { where('amount > ?', 250) }
-  scope :more_expensive_than, ->(price) { where('amount > ?', price) }
-  scope :since, ->(ago) { where("created_at > ?", ago) }
+  scope :more_expensive_than, proc { |price|
+    where('amount > ?', price)
+  }
+
+  scope(:since, lambda do |ago|
+    next unless ago
+
+    where("created_at > ?", ago)
+  end)
+
 end

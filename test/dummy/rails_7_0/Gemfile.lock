@@ -1,9 +1,9 @@
 PATH
-  remote: ../..
+  remote: ../../..
   specs:
     rails-annotate-solargraph (0.5.3)
+      parser (~> 3)
       rails (>= 5.0, < 8.0)
-      solargraph
       yard
 
 GEM

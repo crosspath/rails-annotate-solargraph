@@ -6,8 +6,11 @@
     "gsub",
     "inet",
     "klass",
+    "lstrip",
     "rakefile",
+    "rstrip",
     "solargraph",
+    "stringio",
     "yieldparam"
   ]
 }

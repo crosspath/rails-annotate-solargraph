@@ -6,11 +6,12 @@ require 'fileutils'
 require_relative "solargraph/version"
 require_relative "solargraph/configuration"
 require_relative "solargraph/terminal_colors"
+require_relative "solargraph/scope"
 require_relative "solargraph/model"
 
 begin
   require_relative "overrides"
-rescue
+rescue ::StandardError
   nil
 end
 
@@ -30,6 +31,8 @@ module Rails
       SCHEMA_CLASS_NAME = 'AnnotateSolargraphSchema'
       # @return [String]
       SOLARGRAPH_FILE_NAME = '.solargraph.yml'
+      # @return [String]
+      SOLARGRAPH_FILE_PATH = SOLARGRAPH_FILE_NAME
       # @return [String]
       SCHEMA_FILE_NAME = '.annotate_solargraph_schema'
       # @return [String]
