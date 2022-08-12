@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [0.5.4] - 2022-08-12
+
+- Improve scope documenting
+- Split tests into unit tests and integration tests
+- Remove solargraph from dependencies
+- Improve file update messages
+
 ## [0.5.3] - 2022-04-20
 
 - fix a minor bug which in some rails apps prevented scopes from being documented
