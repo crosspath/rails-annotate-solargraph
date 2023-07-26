@@ -183,7 +183,7 @@ class Rails70Test < ::Minitest::Test
       +#   end
     PATCH
     'app/models/author.rb' => <<~PATCH.chomp,
-      +#   class Author < ApplicationRecord
+      +#   class Author < AbstractRecord
       +#     # Scope `:since`.
       +#     #
       +#     #     scope :since, ->(ago) { where("created_at > ?", ago) }
@@ -241,7 +241,7 @@ class Rails70Test < ::Minitest::Test
       +#   end
     PATCH
     'app/models/book.rb' => <<~PATCH.chomp,
-      +#   class Book < ApplicationRecord
+      +#   class Book < AbstractRecord
       +#     # Scope `:expensive`.
       +#     #
       +#     #     scope :expensive, -> { where('amount > ?', 250) }

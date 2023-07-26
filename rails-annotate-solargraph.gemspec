@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Annotate ActiveRecord models with schema comments formatted in YARD that are compatible with Solargraph."
   spec.homepage = "https://gitlab.com/mateuszdrewniak/rails-annotate-solargraph"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 2.7.0"
+  spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://gitlab.com/mateuszdrewniak/rails-annotate-solargraph"

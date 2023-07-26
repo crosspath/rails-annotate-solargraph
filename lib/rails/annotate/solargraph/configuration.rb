@@ -17,8 +17,11 @@ module Rails
 
         # @param val [Symbol]
         def annotation_position=(val)
-          raise Error, "`annotation_position` is incorrect! Got `#{val.inspect}`, expected a member of `#{ANNOTATION_POSITIONS.inspect}`" \
-           unless ANNOTATION_POSITIONS.include?(val)
+          unless ANNOTATION_POSITIONS.include?(val)
+            raise Error,
+                  "`annotation_position` is incorrect! Got `#{val.inspect}`, " \
+                  "expected a member of `#{ANNOTATION_POSITIONS.inspect}`"
+          end
 
           @annotation_position = val
         end

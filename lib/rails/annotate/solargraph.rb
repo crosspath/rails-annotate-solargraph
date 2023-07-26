@@ -61,10 +61,30 @@ module Rails
 
         # @return [Array<ActiveRecord::Base>]
         def model_classes
-          @model_classes ||= (::ApplicationRecord rescue ::ActiveRecord::Base).subclasses.sort_by(&:name)
+          @model_classes ||= begin
+            base_abstract_class = begin
+              ::ApplicationRecord
+            rescue
+              ::ActiveRecord::Base
+            end
+
+            extract_subclasses(base_abstract_class).sort_by(&:name)
+          end
         end
 
         private
+
+        # @param klass [Class]
+        # @return [Array<Class>]
+        def extract_subclasses(klass)
+          result = []
+          klass.subclasses.each do |k|
+            result << k
+            result.concat(extract_subclasses(k))
+          end
+
+          result
+        end
 
         include TerminalColors
 

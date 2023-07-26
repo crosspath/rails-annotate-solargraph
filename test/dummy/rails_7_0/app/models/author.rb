@@ -1,4 +1,4 @@
-class Author < ApplicationRecord
+class Author < AbstractRecord
   has_many :books
   has_many :essays
   has_one :image, as: :imageable

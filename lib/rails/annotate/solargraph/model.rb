@@ -9,7 +9,8 @@ module Rails
         using TerminalColors::Refinement
 
         # @return [Regexp]
-        MAGIC_COMMENT_REGEXP = /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/.freeze
+        MAGIC_COMMENT_REGEXP =
+          /(^#\s*encoding:.*(?:\n|r\n))|(^# coding:.*(?:\n|\r\n))|(^# -\*- coding:.*(?:\n|\r\n))|(^# -\*- encoding\s?:.*(?:\n|\r\n))|(^#\s*frozen_string_literal:.+(?:\n|\r\n))|(^# -\*- frozen_string_literal\s*:.+-\*-(?:\n|\r\n))/
 
         # @return [Hash{Symbol => String}]
         TYPE_MAP = {
@@ -86,7 +87,12 @@ module Rails
         # @param klass [Class]
         def initialize(klass)
           @klass = klass
-          @file_name = CONFIG.schema_file? ? SCHEMA_RAILS_PATH : ::File.join(::Rails.root, MODEL_DIR, "#{klass.to_s.underscore}.rb")
+          @file_name =
+            if CONFIG.schema_file?
+              SCHEMA_RAILS_PATH
+            else
+              ::File.join(::Rails.root, MODEL_DIR, "#{klass.to_s.underscore}.rb")
+            end
         end
 
         # @return [String]
@@ -104,10 +110,11 @@ module Rails
           self.class.annotation_regexp(@klass)
         end
 
-        # @param :write [Boolean]
+        # @param write [Boolean]
         # @return [String] New file content.
         def annotate(write: true)
           old_content, file_content = remove_annotation write: false
+          return old_content if @klass.abstract_class
 
           if CONFIG.annotation_position == :top
             magic_comments = file_content.scan(MAGIC_COMMENT_REGEXP).flatten.compact.join
@@ -125,7 +132,7 @@ module Rails
           new_file_content
         end
 
-        # @param :write [Boolean]
+        # @param write [Boolean]
         # @return [Array<String>] Old file content followed by new content.
         def remove_annotation(write: true)
           return ['', ''] unless ::File.exist?(@file_name)

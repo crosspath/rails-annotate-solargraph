@@ -1,4 +1,4 @@
-class Book < ApplicationRecord
+class Book < AbstractRecord
   belongs_to :author
   belongs_to :publisher
   has_one :image, as: :imageable
